@@ -21,6 +21,7 @@ define( 'CUSTOM_ORDER_DETAILS_URL', plugin_dir_url( __FILE__ ) );
 require_once CUSTOM_ORDER_DETAILS_DIR . 'includes/order-statuses.php';
 require_once CUSTOM_ORDER_DETAILS_DIR . 'includes/checkout-fields.php';
 require_once CUSTOM_ORDER_DETAILS_DIR . 'includes/ajax-handlers.php';
+require_once CUSTOM_ORDER_DETAILS_DIR . 'includes/orders-page.php';
 require_once CUSTOM_ORDER_DETAILS_DIR . 'includes/admin-page.php';
 require_once CUSTOM_ORDER_DETAILS_DIR . 'includes/admin-assets.php';
 
