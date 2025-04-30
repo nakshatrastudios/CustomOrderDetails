@@ -1,34 +1,39 @@
 <?php
-// Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-    exit;
-}
+if ( ! defined( 'ABSPATH' ) ) exit;
 
-// Enqueue admin scripts and styles for the plugin page
 function cod_enqueue_admin_assets( $hook ) {
-    global $cod_admin_page_hook;
-    if ( empty( $cod_admin_page_hook ) || $hook !== $cod_admin_page_hook ) {
-        return;
+    // Orders page
+    if ( 'toplevel_page_cod-orders-control' === $hook ) {
+        // SheetJS for export (optional)
+        wp_enqueue_script(
+            'sheetjs',
+            'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js',
+            [], '0.16.9', true
+        );
+        // Orders‐table actions
+        wp_enqueue_script(
+            'cod-admin-orders',
+            COD_PLUGIN_URL . 'assets/js/admin-orders.js',
+            ['jquery'], COD_VERSION, true
+        );
+        wp_localize_script( 'cod-admin-orders', 'cod_orders_data', [
+            'ajax_url' => admin_url( 'admin-ajax.php' ),
+            'nonce'    => wp_create_nonce( 'cod_nonce' ),
+        ] );
     }
-    // Enqueue JavaScript for the admin page
-    wp_enqueue_script(
-        'cod-admin-script',
-        CUSTOM_ORDER_DETAILS_URL . 'assets/js/admin.js',
-        array( 'jquery' ),
-        CUSTOM_ORDER_DETAILS_VERSION,
-        true
-    );
-    // Localize script with data for AJAX
-    wp_localize_script(
-        'cod-admin-script',
-        'cod_data',
-        array(
+
+    // Settings page
+    if ( 'cod-orders-control_page_custom-order-details' === $hook ) {
+        wp_enqueue_script(
+            'cod-admin-settings',
+            COD_PLUGIN_URL . 'assets/js/admin.js',
+            ['jquery'], COD_VERSION, true
+        );
+        wp_localize_script( 'cod-admin-settings', 'cod_data', [
             'ajax_url'  => admin_url( 'admin-ajax.php' ),
             'nonce'     => wp_create_nonce( 'cod_nonce' ),
-            'error_msg' => __( 'An error occurred.', 'custom-order-details' )
-        )
-    );
-    // Enqueue CSS for admin page (if needed)
-    // wp_enqueue_style( 'cod-admin-style', CUSTOM_ORDER_DETAILS_URL . 'assets/css/admin.css', array(), CUSTOM_ORDER_DETAILS_VERSION );
+            'error_msg' => __( 'An error occurred.', 'custom-order-details' ),
+        ] );
+    }
 }
 add_action( 'admin_enqueue_scripts', 'cod_enqueue_admin_assets' );

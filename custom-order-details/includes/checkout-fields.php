@@ -1,44 +1,41 @@
 <?php
-// Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-    exit;
-}
+if ( ! defined( 'ABSPATH' ) ) exit;
 
-// Add custom checkout field to WooCommerce checkout page
-function cod_add_checkout_field( $checkout ) {
-    echo '<div id="cod_custom_field"><h3>' . __( 'Additional Information', 'custom-order-details' ) . '</h3>';
-    woocommerce_form_field( 'cod_order_detail', array(
-        'type'        => 'text',
-        'required'    => ( get_option( 'cod_require_field', 1 ) ? true : false ),
-        'label'       => __( 'Custom Order Detail', 'custom-order-details' ),
-        'placeholder' => __( 'Enter detail here', 'custom-order-details' ),
-    ), $checkout->get_value( 'cod_order_detail' ) );
-    echo '</div>';
-}
-add_action( 'woocommerce_after_order_notes', 'cod_add_checkout_field' );
+// Add shipping phone fields at checkout
+add_filter( 'woocommerce_checkout_fields', function( $fields ) {
+    $fields['shipping']['shipping_phone'] = [
+        'type'     => 'tel',
+        'label'    => __( 'Shipping Phone', 'custom-order-details' ),
+        'required' => true,
+        'class'    => ['form-row-wide'],
+        'validate' => ['phone'],
+        'priority' => 110,
+    ];
+    $fields['shipping']['shipping_phone_alternate'] = [
+        'type'     => 'tel',
+        'label'    => __( 'Alternate Shipping Phone', 'custom-order-details' ),
+        'required' => false,
+        'class'    => ['form-row-wide'],
+        'validate' => ['phone'],
+        'priority' => 115,
+    ];
+    return $fields;
+});
 
-// Validate the custom checkout field input
-function cod_validate_checkout_field() {
-    // If field is required and not filled, display an error notice
-    if ( get_option( 'cod_require_field', 1 ) && empty( $_POST['cod_order_detail'] ) ) {
-        wc_add_notice( __( 'Please enter a value for the custom order detail.', 'custom-order-details' ), 'error' );
+// Save shipping phone fields
+add_action( 'woocommerce_checkout_update_order_meta', function( $order_id ) {
+    if ( ! empty( $_POST['shipping_phone'] ) ) {
+        update_post_meta( $order_id, '_shipping_phone', sanitize_text_field( wp_unslash( $_POST['shipping_phone'] ) ) );
     }
-}
-add_action( 'woocommerce_checkout_process', 'cod_validate_checkout_field' );
-
-// Save the custom checkout field value to order meta
-function cod_save_checkout_field( $order_id ) {
-    if ( ! empty( $_POST['cod_order_detail'] ) ) {
-        update_post_meta( $order_id, '_cod_order_detail', sanitize_text_field( $_POST['cod_order_detail'] ) );
+    if ( ! empty( $_POST['shipping_phone_alternate'] ) ) {
+        update_post_meta( $order_id, '_shipping_phone_alternate', sanitize_text_field( wp_unslash( $_POST['shipping_phone_alternate'] ) ) );
     }
-}
-add_action( 'woocommerce_checkout_update_order_meta', 'cod_save_checkout_field' );
+});
 
-// Display the custom field value in the admin order edit page
-function cod_display_order_detail_admin( $order ) {
-    $detail = get_post_meta( $order->get_id(), '_cod_order_detail', true );
-    if ( $detail ) {
-        echo '<p><strong>' . __( 'Custom Order Detail', 'custom-order-details' ) . ':</strong> ' . esc_html( $detail ) . '</p>';
+// Display alternate phone in admin order
+add_action( 'woocommerce_admin_order_data_after_shipping_address', function( $order ) {
+    $alt = get_post_meta( $order->get_id(), '_shipping_phone_alternate', true );
+    if ( $alt ) {
+        echo '<p><strong>' . __( 'Alternate Shipping Phone', 'custom-order-details' ) . ':</strong> ' . esc_html( $alt ) . '</p>';
     }
-}
-add_action( 'woocommerce_admin_order_data_after_billing_address', 'cod_display_order_detail_admin' );
+}, 10 );
